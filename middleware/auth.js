@@ -11,6 +11,6 @@ module.exports = (req, res, next) => {
 		next();
 	} catch (error) {
 		console.log(error); // Afficher l'erreur dans la console
-		res.status(401).json({ error: "Unauthorized" }); // Réponse d'erreur avec un message clair
+		res.status(401).json({ error: "Unauthorized" });
 	}
 };

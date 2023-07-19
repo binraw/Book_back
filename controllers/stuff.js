@@ -84,72 +84,58 @@ exports.createThing = (req, res, next) => {
 		});
 };
 
-exports.pushRating = (req, res, next) => {
-	Thing.findOne({ _id: req.params.id });
-	const { ratings } = req.body;
+exports.pushRating = async (req, res, next) => {
+	const { id } = req.params;
+	const { userId, rating } = req.body;
 
-	// Ensure both ratings array and the first element in the array have userId and grade
-	if (!ratings || !Array.isArray(ratings) || ratings.length === 0) {
-		return res
-			.status(400)
-			.json({ error: "ratings array is required in the request body" });
-	}
+	try {
+		// Vérifiez si l'utilisateur a déjà noté ce livre
+		const book = await Thing.findById(id);
+		const alreadyRated = book.ratings.find((req) => req.userId === userId);
 
-	const { userId, grade } = ratings[0];
+		if (alreadyRated) {
+			return res
+				.status(400)
+				.json({ message: "L'utilisateur a déjà noté ce livre." });
+		}
+		// Vérifiez si la note est valide (entre 1 et 5)
+		if (rating < 1 || rating > 5) {
+			return res
+				.status(400)
+				.json({ message: "La note doit être comprise entre 1 et 5." });
+		}
+		// Ajoutez la nouvelle notation au tableau "ratings"
+		book.ratings.push({ userId, grade: rating });
 
-	// Validate grade value (assuming grade is a number between 1 and 5)
-	if (!Number.isInteger(grade) || grade < 1 || grade > 5) {
-		return res
-			.status(400)
-			.json({ error: "grade should be a number between 1 and 5" });
-	}
+		// Mettez à jour la note moyenne "averageRating"
+		const totalRatings = book.ratings.length;
+		const sumRatings = book.ratings.reduce((sum, note) => sum + note.grade, 0);
+		book.averageRating = Math.round(sumRatings / totalRatings);
 
-	Thing.findById(_id)
-		.then((book) => {
-			if (!book) {
-				return Promise.reject("Book not found");
-			}
+		// Sauvegardez les modifications du livre
+		await book.save();
 
-			// Check if the user already submitted a rating for this book
-			const userRating = book.ratings.find(
-				(rating) => rating.userId === userId
-			);
-
-			if (userRating) {
-				// Update the existing rating if the user already rated the book
-				userRating.grade = grade;
-			} else {
-				// Add a new rating if the user hasn't rated the book before
-				book.ratings.push({ userId, grade });
-			}
-
-			// Recalculate the average rating
-			const totalRatings = book.ratings.length;
-			const sumGrades = book.ratings.reduce(
-				(sum, rating) => sum + rating.grade,
-				0
-			);
-			const averageRating = sumGrades / totalRatings;
-			book.averageRating = averageRating;
-
-			return book.save();
-		})
-		.then((updatedBook) => {
-			res.json(updatedBook);
-		})
-		.catch((error) => {
-			res.status(400).json({ error });
+		console.log("Note ajoutée avec succès à la moyenne !");
+		// Renvoyez le livre mis à jour en réponse
+		res.json(book);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({
+			message: "Une erreur est survenue lors de la notation du livre.",
 		});
+	}
 };
 
-exports.getBestRatedBooks = (req, res, next) => {
-	Thing.find()
-		.sort({ averageRating: -1 }) // Trie les livres par ordre décroissant de la note moyenne
-		.limit(3) // Limite les résultats à 3 livres
-		.then((books) => {
-			res.status(200).json(books);
-		})
-		.catch((error) => {
-			res.status(500).json({ error: "Internal server error" });
-		});
+exports.getBestRatedBooks = async (req, res, next) => {
+	try {
+		const books = await Thing.find()
+			.sort({ averageRating: -1 }) // Trie les livres par ordre décroissant de la note moyenne
+			.limit(3); // Limite les résultats à 3 livres
+
+		res.status(200).json(books);
+		console.log(books);
+	} catch (error) {
+		res.status(500).json({ error: "impossible de recuperer le top 3" });
+		console.log("Erreur:", error);
+	}
 };

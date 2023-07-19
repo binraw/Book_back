@@ -10,5 +10,8 @@ router.get("/api/books/:id", stuffCtrl.getOneThing);
 
 router.put("/api/books/:id", auth, multer, stuffCtrl.modifyThing);
 router.get("/api/books", stuffCtrl.getAllThing);
-router.delete("/api/books/:id ", auth, stuffCtrl.deleteThing);
+router.delete("/api/books/:id", auth, stuffCtrl.deleteThing);
+router.post("/api/books/:id/rating", auth, stuffCtrl.pushRating);
+router.get("/api/books/bestrating", stuffCtrl.getBestRatedBooks);
+
 module.exports = router;

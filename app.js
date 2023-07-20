@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.use("/", stuffRoutes);
+app.use("/api/books", stuffRoutes);
 
 app.use("/api/auth", userRoutes);
 app.use("/picture", express.static(path.join(__dirname, "picture")));

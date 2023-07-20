@@ -50,9 +50,21 @@ exports.deleteThing = (req, res, next) => {
 		});
 };
 exports.getOneThing = (req, res, next) => {
+	if (!Thing) {
+		return res.status(404).json({ error: "Livre non trouvé" });
+	}
+	if (typeof Thing !== "function") {
+		res.status(400).json({ error: "Dataset is not a function" });
+	}
 	Thing.findOne({ _id: req.params.id })
-		.then((thing) => res.status(200).json(thing))
-		.catch((error) => res.status(404).json({ error }));
+		.then((book) => {
+			res.status(200).json(book);
+		})
+		.catch((error) => {
+			res
+				.status(500)
+				.json({ error: "Erreur lors de la récupération du livre" });
+		});
 };
 exports.getAllThing = (req, res, next) => {
 	Thing.find()
@@ -84,58 +96,72 @@ exports.createThing = (req, res, next) => {
 		});
 };
 
-exports.pushRating = async (req, res, next) => {
+exports.pushRating = (req, res, next) => {
 	const { id } = req.params;
 	const { userId, rating } = req.body;
 
-	try {
-		// Vérifiez si l'utilisateur a déjà noté ce livre
-		const book = await Thing.findById(id);
-		const alreadyRated = book.ratings.find((req) => req.userId === userId);
-
-		if (alreadyRated) {
-			return res
-				.status(400)
-				.json({ message: "L'utilisateur a déjà noté ce livre." });
-		}
-		// Vérifiez si la note est valide (entre 1 et 5)
-		if (rating < 1 || rating > 5) {
-			return res
-				.status(400)
-				.json({ message: "La note doit être comprise entre 1 et 5." });
-		}
-		// Ajoutez la nouvelle notation au tableau "ratings"
-		book.ratings.push({ userId, grade: rating });
-
-		// Mettez à jour la note moyenne "averageRating"
-		const totalRatings = book.ratings.length;
-		const sumRatings = book.ratings.reduce((sum, note) => sum + note.grade, 0);
-		book.averageRating = Math.round(sumRatings / totalRatings);
-
-		// Sauvegardez les modifications du livre
-		await book.save();
-
-		console.log("Note ajoutée avec succès à la moyenne !");
-		// Renvoyez le livre mis à jour en réponse
-		res.json(book);
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({
-			message: "Une erreur est survenue lors de la notation du livre.",
-		});
+	console.log(typeof rating);
+	if (!rating) {
+		return res.status(400).json({ error: "Rating must not be empty." });
 	}
+
+	if (typeof rating !== "number") {
+		return res.status(400).json({ error: "Rating must be a number." });
+	}
+
+	if (rating < 0 || rating > 5) {
+		return res.status(400).json({ error: "Rating must be between 0 and 5." });
+	}
+
+	Thing.findById(id)
+		.then((book) => {
+			if (!book) {
+				return res.status(404).json({ error: "Book not found." });
+			}
+
+			const existingRating = book.ratings.find(
+				(rating) => rating.userId === userId
+			);
+
+			if (existingRating) {
+				return res
+					.status(400)
+					.json({ error: "This user has already rated this book." });
+			}
+
+			book.ratings.push({ userId, grade: rating });
+
+			const totalRatings = book.ratings.length;
+			const sumRatings = book.ratings.reduce(
+				(sum, rating) => sum + rating.grade,
+				0
+			);
+			const averageRating = sumRatings / totalRatings;
+
+			book.averageRating = averageRating;
+
+			book
+				.save()
+				.then((updatedBook) => {
+					res.status(200).json(updatedBook);
+				})
+				.catch((error) => {
+					res.status(400).json({ error });
+				});
+		})
+		.catch((error) => {
+			res.status(400).json({ error });
+		});
 };
 
-exports.getBestRatedBooks = async (req, res, next) => {
-	try {
-		const books = await Thing.find()
-			.sort({ averageRating: -1 }) // Trie les livres par ordre décroissant de la note moyenne
-			.limit(3); // Limite les résultats à 3 livres
-
-		res.status(200).json(books);
-		console.log(books);
-	} catch (error) {
-		res.status(500).json({ error: "impossible de recuperer le top 3" });
-		console.log("Erreur:", error);
-	}
+exports.getBestRatedBooks = (req, res) => {
+	Thing.find()
+		.sort({ averageRating: -1 })
+		.limit(3)
+		.then((books) => {
+			res.status(200).json(books);
+		})
+		.catch((error) => {
+			res.status(400).json(error);
+		});
 };

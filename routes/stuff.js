@@ -6,12 +6,12 @@ const multer = require("../middleware/multer-config");
 
 router.post("/", auth, multer, stuffCtrl.createThing);
 
+router.get("/bestrating", stuffCtrl.getBestRatedBooks);
+router.get("/", stuffCtrl.getAllThing);
 router.get("/:id", stuffCtrl.getOneThing);
 
 router.put("/:id", auth, multer, stuffCtrl.modifyThing);
-router.get("/", stuffCtrl.getAllThing);
 router.delete("/:id", auth, stuffCtrl.deleteThing);
 router.post("/:id/rating", auth, stuffCtrl.pushRating);
-router.get("/bestrating", stuffCtrl.getBestRatedBooks);
 
 module.exports = router;

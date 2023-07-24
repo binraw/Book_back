@@ -72,7 +72,6 @@ exports.getAllThing = (req, res, next) => {
 		.catch((error) => res.status(400).json({ error }));
 };
 exports.createThing = (req, res, next) => {
-	console.log(req.body);
 	const thingObject = JSON.parse(req.body.book);
 	console.log(thingObject);
 
@@ -85,7 +84,7 @@ exports.createThing = (req, res, next) => {
 			req.file.filename
 		}`,
 	});
-
+	console.log(req.body.book);
 	thing
 		.save()
 		.then(() => {

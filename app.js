@@ -33,4 +33,11 @@ app.use("/api/books", stuffRoutes);
 
 app.use("/api/auth", userRoutes);
 app.use("/picture", express.static(path.join(__dirname, "picture")));
+
+// Ajoutez l'extension ".webp" à la liste des extensions autorisées pour express.static
+app.use(
+	"/picture",
+	express.static(path.join(__dirname, "picture"), { extensions: ["webp"] })
+);
+
 module.exports = app;

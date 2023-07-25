@@ -5,7 +5,7 @@ exports.modifyThing = (req, res, next) => {
 	const thingObject = req.file
 		? {
 				...JSON.parse(req.body.thing),
-				imageUrl: `${req.protocol}://${req.get("host")}/images/${
+				imageUrl: `${req.protocol}://${req.get("host")}/picture/${
 					req.file.filename.split(".")[0]
 				}optimized.webp
 				`,

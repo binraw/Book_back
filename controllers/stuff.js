@@ -5,9 +5,10 @@ exports.modifyThing = (req, res, next) => {
 	const thingObject = req.file
 		? {
 				...JSON.parse(req.body.thing),
-				imageUrl: `${req.protocol}://${req.get("host")}/picture/${
-					req.file.filename
-				}`,
+				imageUrl: `${req.protocol}://${req.get("host")}/images/${
+					req.file.filename.split(".")[0]
+				}optimized.webp
+				`,
 		  }
 		: { ...req.body };
 
@@ -77,14 +78,15 @@ exports.createThing = (req, res, next) => {
 
 	delete thingObject._id;
 	delete thingObject._userId;
+	const imageUrl = `${req.protocol}://${req.get("host")}/picture/${
+		req.file.filename.split(".")[0]
+	}optimized.webp`;
 	const thing = new Thing({
 		...thingObject,
 		userId: req.auth.userId,
-		imageUrl: `${req.protocol}://${req.get("host")}/picture/${
-			req.file.filename
-		}`,
+		imageUrl: imageUrl,
 	});
-	console.log(req.body.book);
+
 	thing
 		.save()
 		.then(() => {
@@ -93,6 +95,7 @@ exports.createThing = (req, res, next) => {
 		.catch((error) => {
 			res.status(400).json({ error });
 		});
+	console.log(imageUrl);
 };
 
 exports.pushRating = (req, res, next) => {

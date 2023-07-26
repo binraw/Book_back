@@ -1,19 +1,15 @@
 const multer = require("multer");
-const MINE_TYPES = {
-	"image/jpg": "jpg",
-	"image/jpeg": "jpg",
-	"image/png": "png",
-	"image/webp": "webp",
-};
-const storage = multer.diskStorage({
+const sharp = require("sharp");
+const SharpMulter = require("sharp-multer");
+
+const storage = SharpMulter({
 	destination: (req, file, callback) => {
 		callback(null, "picture");
 	},
-	filename: (req, file, callback) => {
-		const name = file.originalname.split(" ").join("_");
-		const extension = MINE_TYPES[file.mimetype];
-		const encodedName = encodeURIComponent(name); // Encoder le nom de fichier correctement
-		callback(null, encodedName + Date.now() + "." + extension);
+
+	imageOptions: {
+		fileFormat: "webp",
+		resize: { width: 500, height: 400, resizeMode: "cover" },
 	},
 });
 

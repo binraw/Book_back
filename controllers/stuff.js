@@ -79,8 +79,8 @@ exports.createThing = (req, res, next) => {
 	delete thingObject._id;
 	delete thingObject._userId;
 	const imageUrl = `${req.protocol}://${req.get("host")}/picture/${
-		req.file.filename.split(".")[0]
-	}optimized.webp`;
+		req.file.filename
+	}`;
 	const thing = new Thing({
 		...thingObject,
 		userId: req.auth.userId,

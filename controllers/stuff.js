@@ -4,20 +4,33 @@ const fs = require("fs");
 exports.modifyThing = (req, res, next) => {
 	const thingObject = req.file
 		? {
-				...JSON.parse(req.body.thing),
+				...JSON.parse(req.body.book),
 				imageUrl: `${req.protocol}://${req.get("host")}/picture/${
-					req.file.filename.split(".")[0]
-				}optimized.webp
-				`,
+					req.file.filename
+				}`,
 		  }
 		: { ...req.body };
 
 	delete thingObject._userId;
+
 	Thing.findOne({ _id: req.params.id })
 		.then((thing) => {
 			if (thing.userId != req.auth.userId) {
 				res.status(401).json({ message: "Not authorized" });
 			} else {
+				// Supprimer l'ancienne image si une nouvelle image est téléchargée
+				if (req.file && thing.imageUrl) {
+					const filename = thing.imageUrl.split("/picture/")[1];
+					fs.unlink(`picture/${filename}`, (err) => {
+						if (err) {
+							console.error(
+								"Erreur lors de la suppression de l'ancienne image :",
+								err
+							);
+						}
+					});
+				}
+
 				Thing.updateOne(
 					{ _id: req.params.id },
 					{ ...thingObject, _id: req.params.id }

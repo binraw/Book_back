@@ -16,10 +16,12 @@ exports.modifyThing = (req, res, next) => {
 	Thing.findOne({ _id: req.params.id })
 		.then((thing) => {
 			if (thing.userId != req.auth.userId) {
-				res.status(401).json({ message: "Not authorized" });
+				res.status(401).json({ message: "Non autorisé" });
 			} else {
-				// Supprimer l'ancienne image si une nouvelle image est téléchargée
-				if (req.file && thing.imageUrl) {
+				// Vérifie si l'image n'a pas été modifiée avant de mettre à jour l'URL de l'image
+				if (!req.file) {
+					delete thingObject.imageUrl;
+				} else if (req.file && thing.imageUrl) {
 					const filename = thing.imageUrl.split("/picture/")[1];
 					fs.unlink(`picture/${filename}`, (err) => {
 						if (err) {
